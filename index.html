@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link
+      rel="stylesheet"
+      href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
+      integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T"
+      crossorigin="anonymous"
+    />
+    <link rel="stylesheet" href="style.css" />
+    <title>Kinosearch</title>
+  </head>
+  <body>
+    <nav class="navbar">
+      <div class="container">
+        <a href="index.html" class="navbar-brand">
+          <h1>Kinosearch</h1>
+        </a>
+      </div>
+    </nav>
+    <div class="container">
+      <div class="jumbotron">
+        <h3 class="text-center">Поиск фильмов и сериалов</h3>
+        <form id="search-form">
+          <div class="form-row align-items-center">
+            <div class="col-10">
+              <input
+                type="text"
+                class="form-control form-control-lg"
+                id="searchText"
+                placeholder="Какой фильм искать?"
+              />
+            </div>
+            <div class="col">
+              <button class="btn-search btn btn-primary btn-lg" type="submit">
+                Найти
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+    <div class="container">
+      <div id="movies" class="row"></div>
+    </div>
+    <script src="./script-fetch.js"></script>
+    <!--     <script src="./script-promise.js"></script> -->
+  </body>
+</html>
