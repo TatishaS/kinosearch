@@ -1,11 +1,133 @@
+'use strict';
+
 const searchForm = document.getElementById('search-form');
 const btnSearch = document.querySelector('.btn-search');
-const movie = document.getElementById('movies');
+const movie = document.querySelector('#movies');
 
 const API_KEY = 'd73b2b7697bc90c2980b57f447140eee';
 const API_URL = `https://api.themoviedb.org/3/search/multi?api_key=${API_KEY}&language=ru-RU&query=`;
 const API_TRENDING = `https://api.themoviedb.org/3/trending/all/week?api_key=${API_KEY}&language=ru-RU`;
 const POSTER_URL = 'https://image.tmdb.org/t/p/w500/';
+
+function addMediaHandler() {
+  const media = movie.querySelectorAll('img[data-id]');
+  media.forEach(function (elem) {
+    elem.style.cursor = 'pointer';
+    elem.addEventListener('click', showFullInfo);
+  });
+}
+
+function showFullInfo() {
+  let url = '';
+  const typeMedia = this.dataset.type;
+  const id = this.dataset.id;
+  if (typeMedia === 'movie') {
+    url = `https://api.themoviedb.org/3/movie/${id}?api_key=${API_KEY}&language=ru-RU`;
+  } else if (typeMedia === 'tv') {
+    url = `https://api.themoviedb.org/3/tv/${id}?api_key=${API_KEY}&language=ru-RU`;
+  } else {
+    movie.innerHTML =
+      '<h2 class="col-12 text-center text-danger">Произошла ошибка. Повторите позже!</h2>';
+  }
+
+  fetch(url)
+    .then(function (value) {
+      if (value.status !== 200) {
+        return Promise.reject(new Error(value.status));
+      }
+      return value.json();
+    })
+    .then(function (output) {
+      movie.innerHTML = `
+      <h4 class="col-12 text-center text-default">${
+        output.name || output.title
+      }</h4>
+      <div class="col-4">
+        <img src='${
+          output.poster_path
+            ? POSTER_URL + output.poster_path
+            : './img/no-poster.jpg'
+        }' alt='${output.name || output.title}'>
+        ${
+          output.homepage
+            ? '<p class="text-center"><a href="${output.homepage}" target="_blank">Официальная страница</a></p>'
+            : ''
+        }
+        </div>
+        <div class="col-8">
+          <p>Рейтинг: ${output.vote_average}</p>
+          <p>Жанр: ${output.genres
+            .map(genre => {
+              return genre.name;
+            })
+            .join(', ')}</p>
+          <p>Вышел: ${output.first_air_date || output.release_date}</p>
+          ${
+            output.number_of_seasons
+              ? `<p> Количество сезонов: ${output.number_of_seasons}</p>`
+              : ''
+          }
+          
+          <p>Описание: ${output.overview}</p>
+          <div class="youtube"></div>
+        </div>
+      `;
+
+      getVideo(typeMedia, id);
+    })
+    .catch(err => {
+      movie.innerHTML = `Упс! Что-то пошло не так. Ошибка ${err.status}`;
+
+      console.error(err.status);
+    });
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+  fetch(API_TRENDING)
+    .then(function (value) {
+      if (value.status !== 200) {
+        return Promise.reject(new Error(value.status));
+      }
+      return value.json();
+    })
+    .then(function (output) {
+      let html =
+        '<h4 class="col-12 text-center text-info">Популярные за неделю</h4>';
+      if (output.results.length === 0) {
+        html =
+          '<h2 class="col-12 text-center text-info">Ничего не найдено</h2>';
+      }
+      output.results.forEach(function (item) {
+        let movieName = item.name || item.title;
+        let mediaType = item.title ? 'movie' : 'tv';
+        let movieReleaseDate = new Date(
+          item.release_date || item.first_air_date
+        ).toLocaleString('ru', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+        });
+
+        const poster = item.poster_path
+          ? POSTER_URL + item.poster_path
+          : './img/no-poster.jpg';
+
+        let dataInfo = `data-id="${item.id}" data-type="${mediaType}"`;
+
+        html += `
+    <div class="col-12 col-md-6 col-xl-3 item">
+    <img src=${poster} alt="${movieName}" ${dataInfo}>
+    <h5>${movieName}(${movieReleaseDate})</h5>
+    </div>`;
+      });
+      movie.innerHTML = html;
+      addMediaHandler();
+    })
+    .catch(err => {
+      movie.innerHTML = `Упс! Что-то пошло не так. Ошибка ${err.status}`;
+      console.log(err.status);
+    });
+});
 
 function apiSearch(e) {
   e.preventDefault();
@@ -63,125 +185,35 @@ function apiSearch(e) {
     });
 }
 
-function addMediaHandler() {
-  const media = movie.querySelectorAll('img[data-id]');
-  media.forEach(function (elem) {
-    elem.style.cursor = 'pointer';
-    elem.addEventListener('click', showFullInfo);
-  });
-}
-
-function showFullInfo() {
-  let url = '';
-  if (this.dataset.type === 'movie') {
-    url = `https://api.themoviedb.org/3/movie/${this.dataset.id}?api_key=${API_KEY}&language=ru-RU`;
-  } else if (this.dataset.type === 'tv') {
-    url = `https://api.themoviedb.org/3/tv/${this.dataset.id}?api_key=${API_KEY}&language=ru-RU`;
-  } else {
-    movie.innerHTML =
-      '<h2 class="col-12 text-center text-danger">Произошла ошибка. Повторите позже!</h2>';
-  }
-
-  fetch(url)
-    .then(function (value) {
-      if (value.status !== 200) {
-        return Promise.reject(new Error(value.status));
-      }
-      return value.json();
-    })
-    .then(function (output) {
-      movie.innerHTML = `
-      <h4 class="col-12 text-center text-default">${
-        output.name || output.title
-      }</h4>
-      <div class="col-4">
-        <img src='${POSTER_URL + output.poster_path}' alt='${
-        output.name || output.title
-      }'>
-        ${
-          output.homepage
-            ? '<p class="text-center"><a href="${output.homepage}" target="_blank">Официальная страница</a></p>'
-            : ''
-        }
-        </div>
-        <div class="col-8">
-          <p>Рейтинг: ${output.vote_average}</p>
-          <p>Жанр: ${output.genres
-            .map(genre => {
-              console.log(genre.name);
-              return genre.name;
-            })
-            .join(', ')}</p>
-          <p>Вышел: ${output.first_air_date || output.release_date}</p>
-          ${
-            output.number_of_seasons
-              ? `<p> Количество сезонов: ${output.number_of_seasons}</p>`
-              : ''
-          }
-          
-          <p>Описание: ${output.overview}</p>
-          <div class="youtube"></div>
-        </div>
-      `;
-    })
-    .catch(err => {
-      movie.innerHTML = `Упс! Что-то пошло не так. Ошибка ${err.status}`;
-
-      console.log(err.status);
-    });
-}
-
-if (document.readyState !== 'loading') {
-  apiTrend();
-} else {
-  document.addEventListener('DOMContentLoaded', apiTrend);
-}
-
-function apiTrend() {
-  fetch(API_TRENDING)
-    .then(function (value) {
-      if (value.status !== 200) {
-        return Promise.reject(new Error(value.status));
-      }
-      return value.json();
-    })
-    .then(function (output) {
-      let html =
-        '<h4 class="col-12 text-center text-info">Популярные за неделю</h4>';
-      if (output.results.length === 0) {
-        html =
-          '<h2 class="col-12 text-center text-info">Ничего не найдено</h2>';
-      }
-      output.results.forEach(function (item) {
-        let movieName = item.name || item.title;
-        let mediaType = item.title ? 'movie' : 'tv';
-        let movieReleaseDate = new Date(
-          item.release_date || item.first_air_date
-        ).toLocaleString('ru', {
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric',
-        });
-
-        const poster = item.poster_path
-          ? POSTER_URL + item.poster_path
-          : './img/no-poster.jpg';
-
-        let dataInfo = `data-id="${item.id}" data-type="${mediaType}"`;
-
-        html += `
-    <div class="col-12 col-md-6 col-xl-3 item">
-    <img src=${poster} alt="${movieName}" ${dataInfo}>
-    <h5>${movieName}(${movieReleaseDate})</h5>
-    </div>`;
-      });
-      movie.innerHTML = html;
-      addMediaHandler();
-    })
-    .catch(err => {
-      movie.innerHTML = `Упс! Что-то пошло не так. Ошибка ${err.status}`;
-      console.log(err.status);
-    });
-}
-
 searchForm.addEventListener('submit', apiSearch);
+
+function getVideo(type, id) {
+  let youtube = movie.querySelector('.youtube');
+  youtube.innerHTML = type;
+  fetch(
+    `https://api.themoviedb.org/3/${type}/${id}/videos?api_key=${API_KEY}&language=ru-RU`
+  )
+    .then(function (value) {
+      if (value.status !== 200) {
+        return Promise.reject(new Error(value.status));
+      }
+      return value.json();
+    })
+    .then(output => {
+      let videoFrame = '<h4 class="col-12 text-info">Трейлеры</h4>';
+      if (output.results.length < 1) {
+        videoFrame = '<p>Доступные для просмотра трейлеры отсутствуют</p>';
+      }
+
+      output.results.forEach(item => {
+        const trailer = item.key
+          ? (videoFrame += `<iframe width="560" height="315" src="https://www.youtube.com/embed/${item.key}" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`)
+          : ' ';
+      });
+      youtube.innerHTML = videoFrame;
+    })
+    .catch(err => {
+      youtube.innerHTML = `Видео отсутствует`;
+      console.log(err.status);
+    });
+}
