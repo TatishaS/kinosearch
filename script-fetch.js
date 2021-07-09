@@ -83,27 +83,28 @@ function apiSearch(e) {
           '<h2 class="col-12 text-center text-info">Фильмы с таким названием не найдены</h2>';
       }
       output.results.forEach(function (item, i) {
-        let movieName = item.name || item.title;
-        let movieReleaseDate = new Date(
-          item.release_date || item.first_air_date
-        ).toLocaleString('ru', {
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric',
-        });
+        if (item.media_type === 'movie' || item.media_type === 'tv') {
+          let movieName = item.name || item.title;
+          let movieReleaseDate = new Date(
+            item.release_date || item.first_air_date
+          ).toLocaleString('ru', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+          });
 
-        const poster = item.poster_path
-          ? POSTER_URL + item.poster_path
-          : './img/no-poster.jpg';
+          const poster = item.poster_path
+            ? POSTER_URL + item.poster_path
+            : './img/no-poster.jpg';
 
-        let dataInfo = '';
-        if (item.media_type === 'movie' || item.media_type === 'tv')
+          let dataInfo = '';
           dataInfo = `data-id="${item.id}" data-type="${item.media_type}"`;
-        html += `
+          html += `
         <div class="col-12 col-md-6 col-xl-3 item">
         <img src=${poster} alt="${movieName}" ${dataInfo}>
         <h5>${movieName}(${movieReleaseDate})</h5>
         </div>`;
+        }
       });
       movie.innerHTML = html;
       addMediaHandler();
